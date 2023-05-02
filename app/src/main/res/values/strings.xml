@@ -1,0 +1,78 @@
+<resources>
+    <string name="app_name">Vline</string>
+    <string name="error">Something went wrong, please try again.</string>
+    <string name="username">Enter your full name</string>
+    <string name="sakha">शाखा</string>
+    <string name="password">password</string>
+    <string name="signin">Sign In</string>
+    <string name="forgot_password">पासवर्ड भूल गए हैं?</string>
+    <string name="or">या</string>
+    <string name="Do_not_have_an_account_already">क्या आपके पास पहले से कोई खाता नहीं है?</string>
+    <string name="register_now">अभी पंजीकरण करें</string>
+    <string name="continue_">continue</string>
+    <string name="home">मुख्य</string>
+    <string name="profile">प्रोफ़ाइल</string>
+    <string name="please_try_later">"बाद में कोशिश करें।"</string>
+    <string name="name">नाम</string>
+    <string name="lastName">उपनाम</string>
+    <string name="business">व्यवसाय</string>
+    <string name="address">पता</string>
+    <string name="address_lenght">पता: पाठ सामग्री 400 वर्णों तक सीमित है</string>
+    <string name="mobileNumber">Enter your mobile number</string>
+    <string name="mobileNumberWhatsApp">फोन नंबर (WhatsApp)</string>
+    <string name="dateOfBirth">जन्मदिन</string>
+    <string name="bloodGroup">ब्लड ग्रुप</string>
+    <string name="education">शिक्षण</string>
+    <string name="educationYear">शिक्षण वर्ष</string>
+    <string name="CurrentLiabilities">वर्तमान दायित्व</string>
+    <string name="pledged">प्रतिज्ञित</string>
+    <string name="yes">हां</string>
+    <string name="no">नहीं</string>
+    <string name="ghoshi">घोष</string>
+    <string name="legalOrganization">विविध संगठन</string>
+    <string name="present">वर्तमान</string>
+    <string name="east">पूर्व</string>
+    <string name="submit">फार्म जमा करें</string>
+    <string name="trackStatus">ट्रैक स्थिति</string>
+    <string name="registrationForm">पंजीकरण फार्म</string>
+    <string name="changePassword">पासवर्ड बदलें</string>
+    <string name="privacyPolicy">privacy and policy</string>
+    <string name="nav_search">खोज</string>
+    <string name="signOut">साइन आउट</string>
+    <string name="appVersion">ऐप संस्करण: 10.1</string>
+    <string name="date">दिनांक</string>
+    <string name="number">सांख्य</string>
+    <string name="travel">प्रवास</string>
+    <string name="travelName">प्रवास नाम</string>
+    <string name="attendance">उपस्थिति</string>
+    <string name="nkk">नगर कार्यकारिणी</string>
+    <string name="cancel">रद्द करना</string>
+    <string name="retry">पुन: प्रयास करें</string>
+    <string name="other">अन्य</string>
+    <string name="other_lenght">अन्य: पाठ सामग्री 400 वर्णों तक सीमित है</string>
+    <string name="update">अपडेट करें</string>
+    <string name="totalShakha">कुल शाखा</string>
+    <string name="shakha_list">शाखाओं की सूची</string>
+    <string name="swayamsevak_list">स्वयंसेवकों की सूची</string>
+    <string name="totalSwayamsevak">कुल स्वयंसेवक</string>
+    <string name="swayamsevak">स्वयं सेवक</string>
+    <string name="search">सूची से खोजें</string>
+    <string name="presence">उपस्थित</string>
+    <string name="File_downloaded">फ़ाइल डाउनलोड की गई</string>
+
+    <string name="email">email id</string>
+    <string name="daitva">daitva</string>
+
+    <string name="youAreNotUpdatedTitle">Update Available</string>
+    <string name="youAreNotUpdatedMessage">A new version of सूची is available. Please update to version\s</string>
+    <string name="youAreNotUpdatedMessage1">\s now</string>
+
+    <string name="verification_code_subtext">Please type the verification code sent to +xxxxxxxxxx</string>
+    <string name="verification_code">Verification Code</string>
+    <string name="validate">Validate</string>
+
+
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="reset">Reset</string>
+</resources>

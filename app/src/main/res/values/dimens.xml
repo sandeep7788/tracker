@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <dimen name="text_nev">16dp </dimen>
+    <!--    <dimen name="design_bottom_navigation_height" tools:override="true">70dp</dimen>-->
+
+    <dimen name="txt_15sp">15sp</dimen>
+    <dimen name="txt_10sp">10sp</dimen>
+    <dimen name="txt_20sp">20sp</dimen>
+    <dimen name="txt_25sp">25sp</dimen>
+    <dimen name="txt_50sp">50sp</dimen>
+
+    <dimen name="bottom_navigation_icon_size" tools:override="true">24dp</dimen>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+</resources>
