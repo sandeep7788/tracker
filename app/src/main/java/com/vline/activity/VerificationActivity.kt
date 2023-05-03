@@ -15,26 +15,26 @@ import com.google.gson.JsonObject
 import com.mukeshsolanki.OnOtpCompletionListener
 import com.vline.MainActivity
 import com.vline.R
-import com.vline.SignInActivity
 import com.vline.helper.*
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.util.HashMap
 
 class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCompletionListener {
 
     private var validateButton: Button? = null
     private var number: TextView? = null
     private var pinEntry: PinEntryEditText? = null
-    lateinit var context:Context
+    lateinit var context: Context
     private var progressDialog: SweetAlertDialog? = null
     private var TAG = "@@VerificationActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_verification)
-        context=this@VerificationActivity
+        context = this@VerificationActivity
 
         progressDialog = SweetAlertDialog(this@VerificationActivity, SweetAlertDialog.PROGRESS_TYPE)
         progressDialog!!.progressHelper.barColor = R.color.theme_color
@@ -44,7 +44,9 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
         initializeUi()
         setListeners()
 
-        number?.text = "Enter the OTP sent to +91 "+ MyApplication.ReadIntPreferences(ApiContants.PREF_WhatsAppNumber).toString()
+        number?.text =
+            "Enter the OTP sent to +91 " + MyApplication.ReadIntPreferences(ApiContants.PREF_WhatsAppNumber)
+                .toString()
 
 
 //        if (pinEntry != null) {
@@ -96,11 +98,20 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
     private fun loginByOtp() {
         progressDialog!!.show()
         val apiInterface: ApiInterface? =
-            RetrofitManager().instanceNew(this@VerificationActivity)?.create(ApiInterface::class.java)
+            RetrofitManager().instanceNew(this@VerificationActivity)
+                ?.create(ApiInterface::class.java)
 
+
+        Log.e(TAG, "loginByOtp: "+ MyApplication.ReadIntPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim())
+        Log.e(TAG, "loginByOtp: "+ pinEntry?.text.toString())
+
+//        var json= HashMap<String,String>()
+//        json.put("mobile",MyApplication.ReadIntPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim())
+//        json.put("password",pinEntry?.text.toString())
+//
         apiInterface!!.loginOtp(
-            MyApplication.ReadIntPreferences(ApiContants.PREF_WhatsAppNumber),
-            pinEntry?.text.toString()
+            MyApplication.ReadIntPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim(),
+            pinEntry!!.text.toString()
         ).enqueue(object : Callback<JsonObject> {
             override fun onFailure(call: Call<JsonObject>, t: Throwable) {
 
@@ -120,8 +131,21 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
                     if (response.isSuccessful) {
 
                         Log.d(TAG, "onResponse: " + response.body().toString())
-                        val jsonObject =
-                            JSONObject(response.body().toString()).getJSONObject("user")
+                        msg =
+                            JSONObject(response.body().toString()).getString("status")
+                        Utility.showSnackBar(
+                            this@VerificationActivity,
+                            msg
+                        )
+
+                        val statusError =
+                            JSONObject(response.body().toString()).getString("status")
+
+                        if (!statusError!!.equals("error")) {
+                            val jsonObject =
+                                JSONObject(response.body().toString()).getJSONObject("user")
+
+
 
                         val authorisationJsonObject =
                             JSONObject(response.body().toString()).getJSONObject("authorisation")
@@ -141,7 +165,8 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
 
                             var data = jsonObject
 
-                            Utility.showSnackBar(this@VerificationActivity,
+                            Utility.showSnackBar(
+                                this@VerificationActivity,
                                 "Welcome " + data.getString("name").toString()
                             )
 
@@ -171,9 +196,14 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
 //                            )
 
 
-
                             startActivity(Intent(context, MainActivity::class.java))
                             finish()
+                        } else {
+                            Utility.showDialog(
+                                context, SweetAlertDialog.WARNING_TYPE, msg
+                            )
+                        }
+
                         } else {
                             Utility.showDialog(
                                 context, SweetAlertDialog.WARNING_TYPE, "Something went wrong"

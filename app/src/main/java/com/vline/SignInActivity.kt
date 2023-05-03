@@ -68,6 +68,11 @@ class SignInActivity : AppCompatActivity() {
                     binding.txtMobileNumber.setBackgroundResource(R.drawable.edit_txt_error)
                     binding.l4.setBackgroundResource(R.drawable.edit_txt_error)
                 }
+                binding.txtMobileNumber.text.length < 10 -> {
+                    Utility.showSnackBar(this, "please enter valid mobile number")
+                    binding.txtMobileNumber.setBackgroundResource(R.drawable.edit_txt_error)
+                    binding.l4.setBackgroundResource(R.drawable.edit_txt_error)
+                }
                 else -> {
                     signIn()
 
@@ -127,7 +132,8 @@ class SignInActivity : AppCompatActivity() {
                         val jsonObject =
                             JSONObject(response.body().toString()).getJSONObject("user")
 
-                        Utility.showSnackBar(this@SignInActivity,
+                        Utility.showSnackBar(
+                            this@SignInActivity,
                             JSONObject(response.body().toString()).getString("message").toString()
                         )
                         if (jsonObject.has("id")) {
@@ -154,7 +160,6 @@ class SignInActivity : AppCompatActivity() {
 //                            MyApplication.writeBoolPreference(
 //                                ApiContants.isMskUser, data.getInt("shaka") > 0
 //                            )
-
 
 
                             startActivity(Intent(context, VerificationActivity::class.java))

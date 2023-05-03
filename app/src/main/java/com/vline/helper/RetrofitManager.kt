@@ -104,13 +104,16 @@ class RetrofitManager {
     }
 
 
-
     private val okHttpClient = unsafeOkHttpClient.connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .addInterceptor { chain ->
             val builder = chain.request().newBuilder()
             builder.addHeader("content-type", "application/json")
-//            builder.addHeader("Content-Length", "")
+                .addHeader(
+                    "Authorization",
+                    "Bearer " + MyApplication.ReadStringPreferences(ApiContants.PREF_Token)
+                )
+            //            builder.addHeader("Content-Length", "")
 //            builder.addHeader("Access-Control-Allow-Origin", "api")
 //            builder.addHeader("APPKEY", "JsfnZGWj20NJMIyg2LDIvQ==")
             chain.proceed(builder.build())

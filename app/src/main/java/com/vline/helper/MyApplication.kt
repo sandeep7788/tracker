@@ -52,6 +52,7 @@ class MyApplication : Application() {
         var MY_APP_SHARED_PREFERENCES = "pubhub"
         var mPreferences: SharedPreferences? = null
         lateinit var instance: MyApplication
+        var count = 0
 
         /*@get:Synchronized
         var instance: MdpPratice? = null

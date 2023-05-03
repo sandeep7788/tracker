@@ -1,32 +1,61 @@
 package com.vline.helper;
 
-import com.vline.helper.ApiContants;
 import com.google.gson.JsonObject;
 
+import java.util.HashMap;
+
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
+import retrofit2.http.Headers;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.Part;
 import retrofit2.http.Query;
 
 public interface ApiInterface {
 
-//    http://cbisolar.vidhyalaya.co.in/Api/Api/customerlogin?mobno=9828775444&password=1234&remember_token=1234
+    //    http://cbisolar.vidhyalaya.co.in/Api/Api/customerlogin?mobno=9828775444&password=1234&remember_token=1234
 //    http://cbisolar.vidhyalaya.co.in/Api/Api/customerlogin?mobno="9828775444"&password="1234"&remember_token="1234"
-
+    @FormUrlEncoded
     @POST(ApiContants.PREF_customer_login)
     Call<JsonObject> signIn(
-            @Query("name") String mobno,
-            @Query("a_number") String password,
-            @Query("mobile") String mobile,
-            @Query("bo_number") String bo_number);
+            @Field("name") String mobno,
+            @Field("a_number") String password,
+            @Field("mobile") String mobile,
+            @Field("bo_number") String bo_number);
+
+    @FormUrlEncoded
+    @POST(ApiContants.PREF_tracking)
+    Call<JsonObject> location(
+            @Field("user_id") String user_id,
+            @Field("let") String let,
+            @Field("long") String longitube,
+            @Field("location") String location,
+            @Field("status") String status);
+
+    //    @FormUrlEncoded
+//    @Headers("Content-Type: multipart/form-data")
+
+    @FormUrlEncoded
+    @POST(ApiContants.PREF_login)
+    Call<JsonObject> loginOtp(@Field("mobile") String mobile,
+                              @Field("password") String password);
 
     @POST(ApiContants.PREF_login)
-    Call<JsonObject> loginOtp(@Query("mobile") Integer mobno,
-                                      @Query("password") String password);
+    Call<JsonObject> loginOtp(@Body HashMap<String, String> body);
+
+    @Multipart
+    @POST("tracking/selfie")
+    Call<JsonObject> image(
+            @Part("user_id") RequestBody id,
+            @Part MultipartBody.Part file
+    );
 
     @POST(ApiContants.PREF_updateNkk)
     Call<JsonObject> updateNkk(@Body String request);
@@ -38,10 +67,10 @@ public interface ApiInterface {
     Call<JsonObject> attandance(@Body String request);
 
 
-
     @GET(ApiContants.PREF_dashboard)
     Call<JsonObject> dashboardShakaList(@Query("id") Integer id);
-//
+
+    //
     @GET(ApiContants.PREF_dashboard)
     Call<JsonObject> dashboardShakaList(@Query("id") Integer id, @Query("user_id") Integer user_id, @Query("flag") String flag
             , @Query("flag_id") Integer flag_id);
@@ -85,7 +114,7 @@ public interface ApiInterface {
             @Field("pravashi_name") String pravashi_name,
             @Field("sankhya") String sankhya,
             @Field("flag") String flag
-            );
+    );
 
     @FormUrlEncoded
     @POST(ApiContants.PREF_profileupdate)
@@ -134,14 +163,14 @@ public interface ApiInterface {
     @FormUrlEncoded
     @POST(ApiContants.PREF_ClinicAPI)
     Call<JsonObject> list_clinic(@Field("action") String action,
-                               @Field("ref_code") String ref_code,
-                               @Field("ref_id") String ref_id
+                                 @Field("ref_code") String ref_code,
+                                 @Field("ref_id") String ref_id
     );
 
     @FormUrlEncoded
     @POST(ApiContants.PREF_ClinicAPI)
     Call<JsonObject> get_clinic(@Field("action") String action,
-                               @Field("clinicid") String ref_code
+                                @Field("clinicid") String ref_code
     );
 
     @FormUrlEncoded
@@ -157,7 +186,7 @@ public interface ApiInterface {
 
     @FormUrlEncoded
     @POST(ApiContants.PREF_ClinicAPI)
-    Call<JsonObject>    new_clinic(
+    Call<JsonObject> new_clinic(
             @Field("action") String action,
             @Field("ref_code") String ref_code,
             @Field("ref_id") String ref_id,

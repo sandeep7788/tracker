@@ -289,6 +289,7 @@
                             android:layout_marginRight="36dp"
                             android:backgroundTint="@color/button_bg"
                             android:clickable="true"
+                            android:maxLength="10"
                             android:fontFamily="@font/worksans_medium"
                             android:hint="@string/mobileNumber"
                             android:inputType="number"

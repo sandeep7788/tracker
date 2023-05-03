@@ -8,6 +8,7 @@ object ApiContants {
         const val PREF_base_url = "https://vline.webpino.tech/api/"
 
         const val PREF_customer_login = "register"
+        const val PREF_tracking = "tracking"
         const val PREF_login = "login"
         const val PREF_AddNkk = "AddNkk"
         const val PREF_updateNkk = "updateNkk"

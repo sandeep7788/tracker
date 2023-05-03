@@ -621,6 +621,18 @@ class Utility {
             }
         }
 
+
+        fun getCurrentTime(): String? {
+            return try {
+                val dateFormat =
+                    SimpleDateFormat("dd: HH:mm:ss")
+                dateFormat.format(Date())
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
+                null
+            }
+        }
+
         fun toast(context: Context, msg: String) {
             Toast.makeText(context,msg,Toast.LENGTH_SHORT).show()
         }

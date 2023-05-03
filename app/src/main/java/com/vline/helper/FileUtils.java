@@ -261,7 +261,7 @@ public class FileUtils {
      */
     public static String getDataColumn(Context context, Uri uri, String selection,
                                        String[] selectionArgs) {
-
+//uri
         Cursor cursor = null;
         final String column = "_data";
         final String[] projection = {
