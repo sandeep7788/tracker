@@ -146,8 +146,8 @@ class SignInActivity : AppCompatActivity() {
                             MyApplication.writeStringPreference(
                                 ApiContants.PREF_USER_NAME, data.getString("name")
                             )
-                            MyApplication.writeIntPreference(
-                                ApiContants.PREF_WhatsAppNumber, data.getInt("mobile")
+                            MyApplication.writeStringPreference(
+                                ApiContants.PREF_WhatsAppNumber, data.getString("mobile")
                             )
 
 //                            MyApplication.writeStringPreference(

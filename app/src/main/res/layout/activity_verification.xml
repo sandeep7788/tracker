@@ -33,7 +33,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:layout_marginBottom="16dp"
-            android:text="@string/verification_code_subtext"
             android:textAlignment="center"
             android:textColor="@color/gpvch_black" />
 

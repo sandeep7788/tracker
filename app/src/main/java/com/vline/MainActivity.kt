@@ -23,6 +23,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import cn.pedant.SweetAlert.SweetAlertDialog
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.GoogleMap
@@ -81,7 +84,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             actionOnService(Actions.STOP)
             textViewTimer!!.setText("00:00:00")
             isStartedButton(false)
-            locStatus = "stop"
+
+
+            setCurrent(true)
         }
 
         LocalBroadcastManager.getInstance(this).registerReceiver(
@@ -95,6 +100,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         binding.logout.setOnClickListener { logout() }
 
         setLocation()
+        getImageList()
+
         buttonStart!!.setOnClickListener {
 
             if (ActivityCompat.checkSelfPermission(
@@ -151,19 +158,32 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         ActivityCompat.requestPermissions(
             this@MainActivity, arr, permissionCode
         )
+
+
+        binding.name.setText(MyApplication.ReadStringPreferences(ApiContants.PREF_USER_NAME))
+        binding.number.setText(MyApplication.ReadStringPreferences(ApiContants.PREF_WhatsAppNumber))
+
+
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
+        mAdapter = ShakhaListAdapter()
+        val mLayoutManager = LinearLayoutManager(applicationContext)
+        mLayoutManager.orientation = LinearLayoutManager.HORIZONTAL
+        recyclerView.layoutManager = mLayoutManager
+        recyclerView.itemAnimator = DefaultItemAnimator()
+        recyclerView.adapter = mAdapter
     }
 
     fun isStartedButton(it: Boolean) {
         if (it) {
             buttonStop?.visibility = View.VISIBLE
             buttonStart?.visibility = View.GONE
-            binding.imageView4?.visibility = View.GONE
+            binding.imageView4?.visibility = View.VISIBLE
             binding.log?.visibility = View.GONE
         } else {
 
             buttonStop?.visibility = View.GONE
             buttonStart?.visibility = View.VISIBLE
-            binding.imageView4?.visibility = View.VISIBLE
+            binding.imageView4?.visibility = View.GONE
             binding.log?.visibility = View.VISIBLE
         }
     }
@@ -182,13 +202,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 1) {
+        if (requestCode == 1 && data !=null && data!!.getExtras() !=null && data!!.getExtras()!!.get("data") != null) {
             val photo: Bitmap = data!!.getExtras()!!.get("data") as Bitmap
-            binding.imageView4.setImageBitmap(photo)
+//            binding.imageView4.setImageBitmap(photo)
             val tempUri: Uri = getImageUri(applicationContext, photo)!!
             file = File(getRealPathFromURI(tempUri))
 //            System.out.println(finalFile.absolutePath)
-            senImage()
+            sendImage()
         }
     }
 
@@ -222,7 +242,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         )
     }
 
-    fun senImage() {
+    var trackingId = 0
+    fun sendImage() {
 
 //        val parts = MultipartBody.Part.createFormData(
 //            "photo", file!!.name, RequestBody.create(
@@ -236,13 +257,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val userId = createPartFromString(
             MyApplication.ReadIntPreferences(ApiContants.PREF_USER_ID).toString()
         )
+        val tracking_id = createPartFromString(
+            trackingId.toString()
+        )
 
 
         val apiInterface: ApiInterface? =
             RetrofitManager().instanceNew(this@MainActivity)?.create(ApiInterface::class.java)
 
         apiInterface!!.image(
-            userId, parts
+            userId, tracking_id,parts
         ).enqueue(object : Callback<JsonObject> {
             override fun onFailure(call: Call<JsonObject>, t: Throwable) {
 
@@ -265,7 +289,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         val msg = JSONObject(response.body().toString()).getString("message")
 
                         Utility.showSnackBar(this@MainActivity, msg)
-
+                        getImageList()
                     } else {
                         Utility.showDialog(
                             context, SweetAlertDialog.WARNING_TYPE, "Something went wrong"
@@ -328,8 +352,85 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
                         val msg = JSONObject(response.body().toString()).getString("message")
-                        Log.d(TAG, "sendLocation onResponse: " + msg)
+
+                        if (JSONObject(response.body().toString()).has("data")) {
+                            trackingId = JSONObject(response.body().toString()).getJSONObject("data").getInt("id")
+                        }
+
+                        Log.d(TAG, "sendLocation onResponse: " + msg + " "+trackingId)
                         Utility.showSnackBar(this@MainActivity, msg)
+
+                    } else {
+                        Utility.showDialog(
+                            context, SweetAlertDialog.WARNING_TYPE, "Something went wrong"
+                        )
+                    }
+                } catch (e: Exception) {
+                    Utility.showDialog(
+                        context, SweetAlertDialog.WARNING_TYPE, resources.getString(R.string.error)
+                    )
+
+                    Toast.makeText(
+                        context, " " + resources.getString(R.string.error), Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+
+        })
+
+
+    }
+
+
+    var imageList = ArrayList<String>()
+    private var mAdapter: ShakhaListAdapter? = null
+    fun getImageList() {
+
+        imageList.clear()
+        val apiInterface: ApiInterface? =
+            RetrofitManager().instanceNew(this@MainActivity)?.create(ApiInterface::class.java)
+
+        val userId = MyApplication.ReadIntPreferences(ApiContants.PREF_USER_ID).toString()
+        apiInterface!!.tracking_selfielist(
+            userId.toString()
+        ).enqueue(object : Callback<JsonObject> {
+            override fun onFailure(call: Call<JsonObject>, t: Throwable) {
+                Log.e(TAG, "sendLocation onFailure: " + t.message)
+
+                if (Utility.isNetworkAvailable(context!!)) {
+                    Toast.makeText(
+                        context, " " + resources.getString(R.string.error), Toast.LENGTH_LONG
+                    ).show()
+                    Log.e(TAG, "onFailure: " + t.message)
+                }
+                progressDialog!!.dismiss()
+            }
+
+            override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
+                progressDialog!!.dismiss()
+                try {
+                    if (response.isSuccessful) {
+
+
+                        val image_path = JSONObject(response.body().toString()).getString("image_path")
+
+                        if (JSONObject(response.body().toString()).has("data")) {
+
+                            var imgList = JSONObject(response.body().toString()).getJSONArray("data")
+
+                            val size: Int = imgList.length()
+                            for (i in 0 until size) {
+                                val json: JSONObject = imgList.getJSONObject(i)
+                                imageList.add(image_path+json.optString("selfie"))
+                            }
+                        }
+                        imageList.reverse()
+
+
+//                        mAdapter!!.updateList(imageList)
+
+                        mAdapter!!.setData(imageList)
+                        mAdapter?.notifyDataSetChanged()
 
                     } else {
                         Utility.showDialog(
@@ -444,7 +545,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     var latitude = 0.0
     var longitude = 0.0
-    fun setCurrent() {
+    fun setCurrent(isStop:Boolean) {
 
         gpsTracker = GPSTracker(this)
         if (isLocationPermissionGranted() && gpsTracker.getIsGPSTrackingEnabled()) {
@@ -463,7 +564,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 //            dialogPermission()
         }
 
-        locStatus = "runing"
+        if (isStop){
+            locStatus = "stop"
+        } else {
+            locStatus = "runing"
+        }
+
 
         sendLocation()
     }
@@ -560,7 +666,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             count++
             if (count >= 60) {
                 count = 0
-                setCurrent()
+                setCurrent(false)
             }
         }
     }

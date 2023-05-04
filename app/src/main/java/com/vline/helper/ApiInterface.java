@@ -39,6 +39,10 @@ public interface ApiInterface {
             @Field("location") String location,
             @Field("status") String status);
 
+    @FormUrlEncoded
+    @POST(ApiContants.tracking_selfielist)
+    Call<JsonObject> tracking_selfielist(@Field("user_id") String user_id);
+
     //    @FormUrlEncoded
 //    @Headers("Content-Type: multipart/form-data")
 
@@ -54,6 +58,7 @@ public interface ApiInterface {
     @POST("tracking/selfie")
     Call<JsonObject> image(
             @Part("user_id") RequestBody id,
+            @Part("tracking_id") RequestBody tracking_id,
             @Part MultipartBody.Part file
     );
 

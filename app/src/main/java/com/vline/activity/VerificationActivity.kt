@@ -45,8 +45,7 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
         setListeners()
 
         number?.text =
-            "Enter the OTP sent to +91 " + MyApplication.ReadIntPreferences(ApiContants.PREF_WhatsAppNumber)
-                .toString()
+            "Enter the OTP sent to +91 " + MyApplication.ReadStringPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim()
 
 
 //        if (pinEntry != null) {
@@ -102,15 +101,15 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
                 ?.create(ApiInterface::class.java)
 
 
-        Log.e(TAG, "loginByOtp: "+ MyApplication.ReadIntPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim())
+        Log.e(TAG, "loginByOtp: "+ MyApplication.ReadStringPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim())
         Log.e(TAG, "loginByOtp: "+ pinEntry?.text.toString())
 
 //        var json= HashMap<String,String>()
-//        json.put("mobile",MyApplication.ReadIntPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim())
+//        json.put("mobile",MyApplication.ReadStringPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim())
 //        json.put("password",pinEntry?.text.toString())
 //
         apiInterface!!.loginOtp(
-            MyApplication.ReadIntPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim(),
+            MyApplication.ReadStringPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim(),
             pinEntry!!.text.toString()
         ).enqueue(object : Callback<JsonObject> {
             override fun onFailure(call: Call<JsonObject>, t: Throwable) {
@@ -176,8 +175,8 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
                             MyApplication.writeStringPreference(
                                 ApiContants.PREF_USER_NAME, data.getString("name")
                             )
-                            MyApplication.writeIntPreference(
-                                ApiContants.PREF_WhatsAppNumber, data.getInt("mobile")
+                            MyApplication.writeStringPreference(
+                                ApiContants.PREF_WhatsAppNumber, data.getString("mobile")
                             )
 
                             MyApplication.writeStringPreference(

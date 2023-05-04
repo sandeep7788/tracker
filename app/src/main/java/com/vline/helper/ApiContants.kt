@@ -9,6 +9,7 @@ object ApiContants {
 
         const val PREF_customer_login = "register"
         const val PREF_tracking = "tracking"
+        const val tracking_selfielist = "tracking/selfielist"
         const val PREF_login = "login"
         const val PREF_AddNkk = "AddNkk"
         const val PREF_updateNkk = "updateNkk"

@@ -108,9 +108,13 @@
         <!-- <meta-data -->
         <!-- android:name="com.google.android.geo.API_KEY" -->
         <!-- android:value="AIzaSyCiSh4VnnI1jemtZTytDoj2X7Wl6evey30" /> -->
+<!--        <meta-data-->
+<!--            android:name="com.google.android.geo.API_KEY"-->
+<!--            android:value="AIzaSyAiBEu8wSo5_MsIOsUF2L74Gk202CqgvW0" />-->
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAiBEu8wSo5_MsIOsUF2L74Gk202CqgvW0" />
+            android:value="AIzaSyDr0AF_MciysIBJlJft6k9bZgyCrCymejM" />
 <!--        <provider-->
 <!--            android:name="androidx.core.content.FileProvider"-->
 <!--            android:authorities="${applicationId}.provider"-->
