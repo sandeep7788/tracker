@@ -9,13 +9,15 @@
     <androidx.cardview.widget.CardView
         android:layout_width="100dp"
         android:layout_height="match_parent"
-        android:layout_margin="4sp"
+        android:layout_marginTop="4sp"
+        android:layout_marginStart="4sp"
+        android:layout_marginBottom="8dp"
         app:cardElevation="4dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="8dp">
+            android:padding="4dp">
 
             <ImageView
                 android:id="@+id/image"

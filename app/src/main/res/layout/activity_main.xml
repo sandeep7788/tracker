@@ -37,7 +37,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="top"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="8dp"
                         android:gravity="top"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -62,7 +62,6 @@
                                 android:layout_below="@+id/t2"
                                 android:layout_alignParentTop="true"
                                 android:layout_gravity="top"
-                                android:layout_marginTop="16dp"
                                 android:fontFamily="@font/intel"
                                 android:gravity="top"
                                 android:text="Welcome!"
@@ -91,8 +90,8 @@
                                 android:fontFamily="@font/intel"
                                 android:gravity="top"
                                 android:text="Welcome!"
-                                android:textColor="@color/text_color"
-                                android:textSize="16dp"
+                                android:textColor="@color/gray_btn_bg_color"
+                                android:textSize="14dp"
                                 android:textStyle="bold" />
 
 
@@ -377,7 +376,8 @@
                     android:backgroundTint="@color/gray_color"
                     android:elevation="4dp"
                     android:padding="@dimen/txt_10sp"
-                    android:text="Log"
+                    android:text="Log's"
+                    android:textSize="@dimen/txt_10sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.0"
