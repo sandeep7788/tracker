@@ -2,9 +2,6 @@ package com.vline.helper
 
 object ApiContants {
 
-//        const val PREF_base_url = "http://cbisolar.in/cbipanel/Api/Api/"
-//        const val PREF_base_url = "http://ec2-18-233-135-9.compute-1.amazonaws.com:8000/api/v1/"
-//        const val PREF_base_url = "http://ec2-18-233-135-9.compute-1.amazonaws.com:9000/api/v1/"
         const val PREF_base_url = "https://vline.webpino.tech/api/"
 
         const val PREF_customer_login = "register"

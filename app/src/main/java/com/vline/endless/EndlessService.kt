@@ -96,7 +96,7 @@ class EndlessService : Service() {
         super.onDestroy()
         log("The service has been destroyed".toUpperCase())
         handler.removeCallbacks(sendUpdatesToUI);
-        Toast.makeText(this, "Service destroyed", Toast.LENGTH_SHORT).show()
+//        Toast.makeText(this, "Service destroyed", Toast.LENGTH_SHORT).show()
     }
 
     override fun onTaskRemoved(rootIntent: Intent) {
@@ -112,7 +112,7 @@ class EndlessService : Service() {
     private fun startService() {
         if (isServiceStarted) return
         log("Starting the foreground service task")
-        Toast.makeText(this, "Service starting its task", Toast.LENGTH_SHORT).show()
+//        Toast.makeText(this, "Service starting its task", Toast.LENGTH_SHORT).show()
         isServiceStarted = true
         setServiceState(this, ServiceState.STARTED)
 
@@ -138,7 +138,7 @@ class EndlessService : Service() {
 
     private fun stopService() {
         log("Stopping the foreground service")
-        Toast.makeText(this, "Service stopping", Toast.LENGTH_SHORT).show()
+//        Toast.makeText(this, "Service stopping", Toast.LENGTH_SHORT).show()
         try {
             wakeLock?.let {
                 if (it.isHeld) {

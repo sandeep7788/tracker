@@ -73,10 +73,9 @@ class SignInActivity : AppCompatActivity() {
                 Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show()
             } else {
 
-                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+//                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
             }
         }
-
     }
 
     private fun clickListener() {

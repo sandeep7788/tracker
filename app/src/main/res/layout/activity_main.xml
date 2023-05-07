@@ -365,6 +365,7 @@
                         android:layout_height="100sp" />
                 </LinearLayout>
 
+<!--
                 <Button
                     android:id="@+id/log"
                     android:layout_width="wrap_content"
@@ -386,6 +387,7 @@
                     app:layout_constraintVertical_bias="1.0"
                     app:srcCompat="@drawable/logout"
                     app:tint="@color/gpvch_black" />
+-->
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.core.widget.NestedScrollView>
     </androidx.constraintlayout.widget.ConstraintLayout>

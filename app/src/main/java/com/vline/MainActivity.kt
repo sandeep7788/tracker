@@ -89,7 +89,7 @@ class MainActivity : AppCompatActivity() {
 
         buttonStop!!.setOnClickListener {
             actionOnService(Actions.STOP)
-            textViewTimer!!.setText("00:00:00")
+//            textViewTimer!!.setText("00:00:00")
 //            binding.txtStart.setText("")
 //            binding.txtCurrent.setText("")
             isStartedButton(false)
@@ -114,10 +114,10 @@ class MainActivity : AppCompatActivity() {
 //                ) != PackageManager.PERMISSION_GRANTED
 //            )
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+            if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
                 && ContextCompat.checkSelfPermission(this, READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, arrayOf(READ_EXTERNAL_STORAGE),
-                    PERMISSION_REQUEST_CODE);
+                    PERMISSION_REQUEST_CODE)
             }
 
             /*if (!checkPermission()
@@ -157,16 +157,20 @@ class MainActivity : AppCompatActivity() {
 
             } else {
                 if (!isMyServiceRunning(EndlessService::class.java)) {
+//                    binding.txtStart.setText("")
+                    textViewTimer!!.setText("00:00:00")
+                    binding.txtCurrent.setText("")
+
                     isStartedButton(true)
                     actionOnService(Actions.START)
-                    setLocation()
+                    setLocation(true)
                 }
             }
         }
 
-        binding.log.setOnClickListener {
-            dialog()
-        }
+//        binding.log.setOnClickListener {
+//            dialog()
+//        }
 
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
@@ -180,6 +184,8 @@ class MainActivity : AppCompatActivity() {
         ActivityCompat.requestPermissions(
             this@MainActivity, arr, permissionCode
         )
+
+        setLocation(false)
     }
 
     private fun checkPermission(): kotlin.Boolean {
@@ -307,13 +313,13 @@ class MainActivity : AppCompatActivity() {
             buttonStop?.visibility = View.VISIBLE
             buttonStart?.visibility = View.GONE
             binding.imageView4?.visibility = View.VISIBLE
-            binding.log?.visibility = View.GONE
+//            binding.log?.visibility = View.GONE
         } else {
 
             buttonStop?.visibility = View.GONE
             buttonStart?.visibility = View.VISIBLE
             binding.imageView4?.visibility = View.GONE
-            binding.log?.visibility = View.VISIBLE
+//            binding.log?.visibility = View.VISIBLE
         }
     }
 
@@ -592,7 +598,7 @@ class MainActivity : AppCompatActivity() {
             }).setNegativeButton("No", null).show()
     }
 
-    fun setLocation() {
+    fun setLocation(isCallApi:Boolean) {
 
         gpsTracker = GPSTracker(this)
         if (isLocationPermissionGranted() && gpsTracker.getIsGPSTrackingEnabled()) {
@@ -609,7 +615,10 @@ class MainActivity : AppCompatActivity() {
 //            dialogPermission()
         }
         locStatus = "start"
-        sendLocation()
+
+        if (isCallApi) {
+            sendLocation()
+        }
     }
 
     var latitude = 0.0
@@ -637,7 +646,7 @@ class MainActivity : AppCompatActivity() {
                 currentAddress = "$addressLine $city $postalCode $country"
             }
 
-            list.add(" - " + Utility.getCurrentTime() + " - $addressLine $city $postalCode $country")
+//            list.add(" - " + Utility.getCurrentTime() + " - $addressLine $city $postalCode $country")
             Log.e(TAG, "setCurrent: " + list.size)
         } else {
 //            dialogPermission()
