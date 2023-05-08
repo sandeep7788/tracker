@@ -1,23 +1,17 @@
 package com.vline
 
 
-import android.Manifest.permission
+import android.Manifest
 import android.Manifest.permission.*
 import android.app.ActivityManager
 import android.app.AlertDialog
 import android.content.*
 import android.content.pm.PackageManager
-import android.database.Cursor
-import android.graphics.Bitmap
-import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
-import android.os.Build.VERSION
-import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore
-import android.provider.MediaStore.Images
+import android.os.Handler
 import android.provider.Settings
 import android.util.Log
 import android.view.View
@@ -26,28 +20,22 @@ import androidx.annotation.NonNull
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import androidx.databinding.DataBindingUtil
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import cn.pedant.SweetAlert.SweetAlertDialog
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.gson.JsonObject
 import com.vline.activity.SplashScreen
 import com.vline.databinding.ActivityMainBinding
 import com.vline.endless.*
 import com.vline.helper.*
 import com.vline.helper.MyApplication.Companion.count
-import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.io.ByteArrayOutputStream
-import java.io.File
 
 
 class MainActivity : AppCompatActivity() {
@@ -58,11 +46,9 @@ class MainActivity : AppCompatActivity() {
     var buttonStart: Button? = null
     var buttonStop: Button? = null
     var arr = arrayOf(
-        READ_EXTERNAL_STORAGE,
         ACCESS_COARSE_LOCATION,
         ACCESS_FINE_LOCATION,
         ACCESS_BACKGROUND_LOCATION,
-        CAMERA
     )
     var list: ArrayList<String> = ArrayList()
     lateinit var context: Context
@@ -102,31 +88,11 @@ class MainActivity : AppCompatActivity() {
             mMessageReceiver, IntentFilter("GPSLocationUpdates")
         )
 
-
-
-//        getImageList()
-        captureImage()
-
         buttonStart!!.setOnClickListener {
 
-//            if (ActivityCompat.checkSelfPermission(
-//                    this, READ_EXTERNAL_STORAGE
-//                ) != PackageManager.PERMISSION_GRANTED
-//            )
+//            checkPermission()
 
-            if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
-                && ContextCompat.checkSelfPermission(this, READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, arrayOf(READ_EXTERNAL_STORAGE),
-                    PERMISSION_REQUEST_CODE)
-            }
-
-            /*if (!checkPermission()
-            ) {
-                requestPermission()
-//                dialogPermission("storage")
-
-
-            }*/ else if (ActivityCompat.checkSelfPermission(
+            if (ActivityCompat.checkSelfPermission(
                     this, ACCESS_COARSE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
@@ -137,24 +103,20 @@ class MainActivity : AppCompatActivity() {
             ) {
                 dialogPermission("current location finer")
             } else if (ActivityCompat.checkSelfPermission(
-                    this, CAMERA
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                dialogPermission("camera")
-            } else if (ActivityCompat.checkSelfPermission(
                     this, ACCESS_BACKGROUND_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
-                && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-//                ActivityCompat.requestPermissions(
-//                    this, arrayOf(
-//                        ACCESS_BACKGROUND_LOCATION
-//                    ), permissionCode
-//                )
-
+                ) != PackageManager.PERMISSION_GRANTED && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+            ) {
                 backgroundPermission()
-//                dialogPermission("background location")
 
 
+            } else if (!isLocationEnabled()) {
+                ActivityCompat.requestPermissions(
+                    this@MainActivity,
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                    103
+                )
+                startActivity(Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                Utility.showSnackBar(this@MainActivity, "Please turn on GPS")
             } else {
                 if (!isMyServiceRunning(EndlessService::class.java)) {
 //                    binding.txtStart.setText("")
@@ -168,92 +130,147 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-//        binding.log.setOnClickListener {
-//            dialog()
-//        }
 
-
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
-        mAdapter = ShakhaListAdapter()
-        val mLayoutManager = LinearLayoutManager(applicationContext)
-        mLayoutManager.orientation = LinearLayoutManager.HORIZONTAL
-        recyclerView.layoutManager = mLayoutManager
-        recyclerView.itemAnimator = DefaultItemAnimator()
-        recyclerView.adapter = mAdapter
-
-        ActivityCompat.requestPermissions(
-            this@MainActivity, arr, permissionCode
-        )
+//        ActivityCompat.requestPermissions(
+//            this@MainActivity, arr, permissionCode
+//        )
+        checkPermission()
 
         setLocation(false)
     }
 
-    private fun checkPermission(): kotlin.Boolean {
-
-
-
-        var statusPermission=false
-        if (VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    READ_EXTERNAL_STORAGE
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                if (!(VERSION.SDK_INT >= Build.VERSION_CODES.R)) {
-                    statusPermission=true
+    private val LOCATION_PERMISSION_CODE = 101
+    private val BACKGROUND_LOCATION_PERMISSION_CODE = 102
+    private fun checkPermission() {
+        if (ContextCompat.checkSelfPermission(
+                this@MainActivity, Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            // Fine Location permission is granted
+            // Check if current android version >= 11, if >= 11 check for Background Location permission
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (ContextCompat.checkSelfPermission(
+                        this@MainActivity, Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    // Background Location Permission is granted so do your work here
+                } else {
+                    // Ask for Background Location Permission
+                    askPermissionForBackgroundUsage()
                 }
             }
-            Environment.isExternalStorageManager()
-            return statusPermission
         } else {
-            val result: Int =
-                ContextCompat.checkSelfPermission(this@MainActivity, READ_EXTERNAL_STORAGE)
-            return result == PackageManager.PERMISSION_GRANTED
+            // Fine Location Permission is not granted so ask for permission
+            askForLocationPermission()
         }
     }
 
-    private fun requestPermission() {
-//        if (SDK_INT >= Build.VERSION_CODES.R || !statusStorage) {
-//            try {
-//                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-//                intent.addCategory("android.intent.category.DEFAULT")
-//                intent.data =
-//                    Uri.parse(String.format("package:%s", applicationContext.packageName))
-//                startActivityForResult(intent, 2296)
-//            } catch (e: java.lang.Exception) {
-//                val intent = Intent()
-//                intent.action = Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
-//                startActivityForResult(intent, 2296)
-//            }
-//        } else {
-//            //below android 11
-//            ActivityCompat.requestPermissions(
-//                this@MainActivity,
-//                arrayOf(WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE),
-//                PERMISSION_REQUEST_CODE
-//            )
-//        }
-        ActivityCompat.requestPermissions(
-            this@MainActivity,
-            arrayOf(WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE),
-            PERMISSION_REQUEST_CODE
-        )
+    private fun isLocationEnabled(): Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return LocationManagerCompat.isLocationEnabled(locationManager)
     }
+
+    private fun askForLocationPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(
+                this@MainActivity, Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        ) {
+            AlertDialog.Builder(this).setTitle("Permission Needed!")
+                .setMessage("Location Permission Needed!")
+                .setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                    ActivityCompat.requestPermissions(
+                        this@MainActivity, arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ), LOCATION_PERMISSION_CODE
+                    )
+                }).setNegativeButton("CANCEL", DialogInterface.OnClickListener { dialog, which ->
+                    // Permission is denied by the user
+                }).create().show()
+        } else {
+            ActivityCompat.requestPermissions(
+                this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_CODE
+            )
+        }
+    }
+
+    private fun askPermissionForBackgroundUsage() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(
+                this@MainActivity, Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
+        ) {
+            AlertDialog.Builder(this).setTitle("Permission Needed!")
+                .setMessage("Background Location Permission Needed!, tap \"Allow all time in the next screen\"")
+                .setPositiveButton(
+                    "OK"
+                ) { dialog, which ->
+                    ActivityCompat.requestPermissions(
+                        this@MainActivity,
+                        arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                        BACKGROUND_LOCATION_PERMISSION_CODE
+                    )
+                }.setNegativeButton(
+                    "CANCEL"
+                ) { dialog, which ->
+                    // User declined for Background Location Permission.
+                }.create().show()
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                BACKGROUND_LOCATION_PERMISSION_CODE
+            )
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+
+        try {
+            if (requestCode == LOCATION_PERMISSION_CODE) {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // User granted location permission
+                    // Now check if android version >= 11, if >= 11 check for Background Location Permission
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        if (ContextCompat.checkSelfPermission(
+                                this@MainActivity, Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            // Background Location Permission is granted so do your work here
+
+                        } else {
+                            // Ask for Background Location Permission
+                            askPermissionForBackgroundUsage();
+                        }
+                    }
+                } else {
+                    // User denied location permission
+                }
+            } else if (requestCode == BACKGROUND_LOCATION_PERMISSION_CODE) {
+//            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                // User granted for Background Location Permission.
+//            } else {
+//                // User declined for Background Location Permission.
+//            }
+            }
+
+        } catch (e: Exception) {
+
+        }
+    }
+
 
     var PERMISSION_REQUEST_BACKGROUND_LOCATION = 102
     var PERMISSION_REQUEST_FINE_LOCATION = 103
-    var PERMISSION_REQUEST_CODE = 104
 
     fun backgroundPermission() {
         if (checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            if (checkSelfPermission(ACCESS_BACKGROUND_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-//                if (shouldShowRequestPermissionRationale(ACCESS_BACKGROUND_LOCATION)) {
-                if (false) {
-                    val builder =
-                        AlertDialog.Builder(this)
+            if (checkSelfPermission(ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                if (shouldShowRequestPermissionRationale(ACCESS_BACKGROUND_LOCATION)) {
+//                if (false) {
+                    val builder = AlertDialog.Builder(this)
                     builder.setTitle("This app needs background location access")
                     builder.setMessage("Please grant location access so this app can detect beacons in the background.")
                     builder.setPositiveButton(android.R.string.ok, null)
@@ -266,17 +283,17 @@ class MainActivity : AppCompatActivity() {
                     builder.show()
                 } else {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                        val builder =
-                            AlertDialog.Builder(this)
+                        val builder = AlertDialog.Builder(this)
                         builder.setTitle("Functionality limited")
                         builder.setMessage("Since background location access has not been granted, this app will not be able to discover beacons in the background.  Please go to Settings -> Applications -> Permissions and grant background location access to this app.")
-                        builder.setPositiveButton(android.R.string.ok, DialogInterface.OnClickListener { dialogInterface, i ->
-                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                            val uri: Uri = Uri.fromParts("package", packageName, null)
-                            intent.data = uri
-                            // This will take the user to a page where they have to click twice to drill down to grant the permission
-                            startActivity(intent)
-                        })
+                        builder.setPositiveButton(android.R.string.ok,
+                            DialogInterface.OnClickListener { dialogInterface, i ->
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                val uri: Uri = Uri.fromParts("package", packageName, null)
+                                intent.data = uri
+                                // This will take the user to a page where they have to click twice to drill down to grant the permission
+                                startActivity(intent)
+                            })
 //
                         builder.show()
                     }
@@ -288,8 +305,7 @@ class MainActivity : AppCompatActivity() {
                     arrayOf(
                         ACCESS_FINE_LOCATION
                         /*Manifest.permission.ACCESS_BACKGROUND_LOCATION*/
-                    ),
-                    PERMISSION_REQUEST_FINE_LOCATION
+                    ), PERMISSION_REQUEST_FINE_LOCATION
                 )
             } else {
                 val builder = AlertDialog.Builder(this)
@@ -312,64 +328,16 @@ class MainActivity : AppCompatActivity() {
         if (it) {
             buttonStop?.visibility = View.VISIBLE
             buttonStart?.visibility = View.GONE
-            binding.imageView4?.visibility = View.VISIBLE
 //            binding.log?.visibility = View.GONE
         } else {
 
             buttonStop?.visibility = View.GONE
             buttonStart?.visibility = View.VISIBLE
-            binding.imageView4?.visibility = View.GONE
 //            binding.log?.visibility = View.VISIBLE
         }
     }
 
     private var progressDialog: SweetAlertDialog? = null
-
-    fun captureImage() {
-        binding.imageView4.setOnClickListener {
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            startActivityForResult(intent, 1)
-        }
-    }
-
-    var file: File? = null
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 1 && data != null && data!!.getExtras() != null && data!!.getExtras()!!
-                .get("data") != null
-        ) {
-            val photo: Bitmap = data!!.getExtras()!!.get("data") as Bitmap
-//            binding.imageView4.setImageBitmap(photo)
-            val tempUri: Uri = getImageUri(applicationContext, photo)!!
-            file = File(getRealPathFromURI(tempUri))
-//            System.out.println(finalFile.absolutePath)
-            sendImage()
-        }
-    }
-
-    fun getImageUri(inContext: Context, inImage: Bitmap): Uri? {
-        val bytes = ByteArrayOutputStream()
-        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
-        val path = Images.Media.insertImage(
-            inContext.contentResolver, inImage, "Title", null
-        )
-        return Uri.parse(path)
-    }
-
-    fun getRealPathFromURI(uri: Uri?): String? {
-        var path = ""
-        if (contentResolver != null) {
-            val cursor: Cursor? = contentResolver.query(uri!!, null, null, null, null)
-            if (cursor != null) {
-                cursor.moveToFirst()
-                val idx: Int = cursor.getColumnIndex(Images.ImageColumns.DATA)
-                path = cursor.getString(idx)
-                cursor.close()
-            }
-        }
-        return path
-    }
 
     @NonNull
     private fun createPartFromString(value: String): RequestBody? {
@@ -379,73 +347,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     var trackingId = 0
-    fun sendImage() {
-
-//        val parts = MultipartBody.Part.createFormData(
-//            "photo", file!!.name, RequestBody.create(
-//                MediaType.parse("image/*"), file
-//            )
-//        )
-//        val file = File(FileUtils.getPath(this@MainActivity, imageUri))
-        val requestFile: RequestBody =
-            RequestBody.create(MediaType.parse("multipart/form-data"), file)
-        val parts = MultipartBody.Part.createFormData("selfie", file!!.name, requestFile)
-        val userId = createPartFromString(
-            MyApplication.ReadIntPreferences(ApiContants.PREF_USER_ID).toString()
-        )
-        val tracking_id = createPartFromString(
-            trackingId.toString()
-        )
-
-
-        val apiInterface: ApiInterface? =
-            RetrofitManager().instanceNew(this@MainActivity)?.create(ApiInterface::class.java)
-
-        apiInterface!!.image(
-            userId, tracking_id, parts
-        ).enqueue(object : Callback<JsonObject> {
-            override fun onFailure(call: Call<JsonObject>, t: Throwable) {
-
-                if (Utility.isNetworkAvailable(context!!)) {
-                    Toast.makeText(
-                        context, " " + resources.getString(R.string.error), Toast.LENGTH_LONG
-                    ).show()
-                    Log.e(TAG, "onFailure: " + t.message)
-                }
-                progressDialog!!.dismiss()
-            }
-
-            override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
-                progressDialog!!.dismiss()
-                var msg: String? = null;
-                try {
-                    if (response.isSuccessful) {
-
-                        Log.d(TAG, "onResponse: " + response.body().toString())
-                        val msg = JSONObject(response.body().toString()).getString("message")
-
-//                        Utility.showSnackBar(this@MainActivity, msg)
-                        getImageList()
-                    } else {
-                        Utility.showDialog(
-                            context, SweetAlertDialog.WARNING_TYPE, "Something went wrong"
-                        )
-                    }
-                } catch (e: Exception) {
-                    Utility.showDialog(
-                        context, SweetAlertDialog.WARNING_TYPE, resources.getString(R.string.error)
-                    )
-
-                    Toast.makeText(
-                        context, " " + resources.getString(R.string.error), Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-
-        })
-
-
-    }
 
 
     fun sendLocation() {
@@ -523,11 +424,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-    var imageList = ArrayList<String>()
-    private var mAdapter: ShakhaListAdapter? = null
-
-
     lateinit var gpsTracker: GPSTracker
 
     var alertDialog: AlertDialog? = null;
@@ -579,7 +475,8 @@ class MainActivity : AppCompatActivity() {
         val convertView: View = inflater.inflate(R.layout.custom, null) as View
         alertDialog.setView(convertView)
         alertDialog.setTitle("Log's")
-        alertDialog.setPositiveButton("close",
+        alertDialog.setPositiveButton(
+            "close",
             DialogInterface.OnClickListener { dialog, which -> dialog.dismiss() })
         val adapter = ArrayAdapter(this, R.layout.activity_list_item, names)
 //        convertView.findViewById(R.id.lv).adapter = adapter
@@ -598,51 +495,66 @@ class MainActivity : AppCompatActivity() {
             }).setNegativeButton("No", null).show()
     }
 
-    fun setLocation(isCallApi:Boolean) {
+    fun setLocation(isCallApi: Boolean) {
 
         gpsTracker = GPSTracker(this)
+        var country: String? = null
         if (isLocationPermissionGranted() && gpsTracker.getIsGPSTrackingEnabled()) {
 
-            val country = gpsTracker.getCountryName(this)
+            country = gpsTracker.getCountryName(this)
             val city = gpsTracker.getLocality(this)
             val postalCode = gpsTracker.getPostalCode(this)
             val addressLine = gpsTracker.getAddressLine(this)
 
-            binding.txtStart.text = "$addressLine $city $postalCode $country"
+
+            if (country != null) {
+                binding.txtStart.text = "$addressLine $city $postalCode $country"
+            }
             latitude = gpsTracker.latitude
             longitude = gpsTracker.longitude
         } else {
 //            dialogPermission()
         }
         locStatus = "start"
+        Log.e(TAG, "setLocation: $locStatus" + country)
 
-        if (isCallApi) {
-            sendLocation()
+        if (callCount < 3) {
+            if (country.isNullOrEmpty()) {
+                callCount = 0
+                Handler().postDelayed(Runnable {
+                    setLocation(isCallApi)
+                }, 4000)
+            } else if (isCallApi) {
+                sendLocation()
+            }
         }
     }
 
     var latitude = 0.0
     var longitude = 0.0
     var currentAddress = ""
+    var callCount = 0
     fun setCurrent(isStop: Boolean) {
-
+        callCount++
         if (isStop) {
             locStatus = "stop"
         } else {
             locStatus = "runing"
         }
 
+        var country: String? = null
         gpsTracker = GPSTracker(this)
         if (isLocationPermissionGranted() && gpsTracker.getIsGPSTrackingEnabled()) {
 
-            val country = gpsTracker.getCountryName(this)
+            country = gpsTracker.getCountryName(this)
             val city = gpsTracker.getLocality(this)
             val postalCode = gpsTracker.getPostalCode(this)
             val addressLine = gpsTracker.getAddressLine(this)
             latitude = gpsTracker.latitude
             longitude = gpsTracker.longitude
 
-            if (locStatus.equals("runing", true) || locStatus.equals("stop", true)) {
+            if ((locStatus.equals("runing", true) || locStatus.equals("stop", true))
+                && country != null) {
                 currentAddress = "$addressLine $city $postalCode $country"
             }
 
@@ -652,15 +564,22 @@ class MainActivity : AppCompatActivity() {
 //            dialogPermission()
         }
 
+        if (isStop) {
+            sendLocation()
+        } else if (callCount < 3)
+            if (country.isNullOrEmpty()) {
+                callCount = 0
+                Handler().postDelayed(Runnable {
+                    setCurrent(isStop)
+                }, 4000)
+            } else {
+                callCount = 0
+                sendLocation()
+            }
 
-
-
-        sendLocation()
     }
 
     private fun isLocationPermissionGranted(): Boolean {
-
-
         return if (ActivityCompat.checkSelfPermission(
                 this, android.Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
@@ -671,7 +590,7 @@ class MainActivity : AppCompatActivity() {
                 this, arrayOf(
                     android.Manifest.permission.ACCESS_FINE_LOCATION,
                     android.Manifest.permission.ACCESS_COARSE_LOCATION
-                ), 100
+                ), permissionCode2
             )
             false
         } else {
@@ -747,58 +666,74 @@ class MainActivity : AppCompatActivity() {
 
             binding.timeView.setText(requiredFormat)
 
+
+            if (binding.txtStart.text.toString().contentEquals("null")) {
+                setLocation(false)
+            }
+
+            val permissionStatus: Boolean =
+                if (!isLocationEnabled()) {
+                    false
+                } else if (ActivityCompat.checkSelfPermission(
+                        this@MainActivity, ACCESS_COARSE_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    ActivityCompat.requestPermissions(
+                        this@MainActivity,
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                        103
+                    )
+                    false
+                } else if (ActivityCompat.checkSelfPermission(
+                        this@MainActivity, ACCESS_FINE_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    false
+                } else if (ActivityCompat.checkSelfPermission(
+                        this@MainActivity, ACCESS_BACKGROUND_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+                ) {
+                    false
+                } else {
+                    true
+                }
+
             count++
             if (count >= 60) {
                 count = 0
-                setCurrent(false)
+                if (permissionStatus) {
+                    setCurrent(false)
+                } else {
+
+                    actionOnService(Actions.STOP)
+                    isStartedButton(false)
+                    setCurrent(true)
+
+                    val builder = AlertDialog.Builder(this@MainActivity, AlertDialog.THEME_HOLO_LIGHT)
+                    builder.setTitle("Warning!")
+                    builder.setMessage(
+                        "During tracking we are not able to get Your location." +
+                                " that's by tracking is finished."
+                    )
+                    builder.setPositiveButton("ok", object : DialogInterface.OnClickListener {
+                        override fun onClick(p0: DialogInterface?, p1: Int) {
+                            p0?.cancel()
+//                            val mainIntent = Intent(this@MainActivity, SplashScreen::class.java)
+//                            intent.flags =
+//                                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+//                            startActivity(mainIntent)
+//                            finish()
+                        }
+                    })
+                    builder.show()
+                }
             }
         }
     }
 
-    private lateinit var currentLocation: Location
-    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private val permissionCode = 101
+    private val permissionCode2 = 102
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == permissionCode) {
-//            if (ActivityCompat.checkSelfPermission(
-//                    this,
-//                    ACCESS_BACKGROUND_LOCATION
-//                ) != PackageManager.PERMISSION_GRANTED
-//            ) {
-////                dialogPermission("background location")
-//                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
-//            } else if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show()
-//            } else {
-//
-//                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
-//            }
-        }
-
-        if (grantResults != null && requestCode == PERMISSION_REQUEST_CODE) {
-
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    READ_EXTERNAL_STORAGE
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-//                if (!(VERSION.SDK_INT >= Build.VERSION_CODES.R)) {
-//                    statusStorage = false
-//
-//                    dialogPermission("storage")
-//                }
-                dialogPermission("storage")
-            } else {
-                Toast.makeText(this, "Storage permission is granted!", Toast.LENGTH_SHORT)
-                    .show()
-            }
-        }
-    }
-    var statusStorage = true
 
     fun dialogPermission(msg: String) {
         val builder = AlertDialog.Builder(this, AlertDialog.THEME_HOLO_LIGHT)
@@ -823,76 +758,5 @@ class MainActivity : AppCompatActivity() {
 
         })
         builder.show()
-    }
-
-    fun getImageList() {
-
-        imageList.clear()
-        val apiInterface: ApiInterface? =
-            RetrofitManager().instanceNew(this@MainActivity)?.create(ApiInterface::class.java)
-
-        val userId = MyApplication.ReadIntPreferences(ApiContants.PREF_USER_ID).toString()
-        apiInterface!!.tracking_selfielist(
-            userId.toString()
-        ).enqueue(object : Callback<JsonObject> {
-            override fun onFailure(call: Call<JsonObject>, t: Throwable) {
-                Log.e(TAG, "sendLocation onFailure: " + t.message)
-
-                if (Utility.isNetworkAvailable(context!!)) {
-                    Toast.makeText(
-                        context, " " + resources.getString(R.string.error), Toast.LENGTH_LONG
-                    ).show()
-                    Log.e(TAG, "onFailure: " + t.message)
-                }
-                progressDialog!!.dismiss()
-            }
-
-            override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
-                progressDialog!!.dismiss()
-                try {
-                    if (response.isSuccessful) {
-
-
-                        val image_path =
-                            JSONObject(response.body().toString()).getString("image_path")
-
-                        if (JSONObject(response.body().toString()).has("data")) {
-
-                            var imgList =
-                                JSONObject(response.body().toString()).getJSONArray("data")
-
-                            val size: Int = imgList.length()
-                            for (i in 0 until size) {
-                                val json: JSONObject = imgList.getJSONObject(i)
-                                imageList.add(image_path + json.optString("selfie"))
-                            }
-                        }
-                        imageList.reverse()
-
-
-//                        mAdapter!!.updateList(imageList)
-
-                        mAdapter!!.setData(imageList)
-                        mAdapter?.notifyDataSetChanged()
-
-                    } else {
-                        Utility.showDialog(
-                            context, SweetAlertDialog.WARNING_TYPE, "Something went wrong"
-                        )
-                    }
-                } catch (e: Exception) {
-                    Utility.showDialog(
-                        context, SweetAlertDialog.WARNING_TYPE, resources.getString(R.string.error)
-                    )
-
-                    Toast.makeText(
-                        context, " " + resources.getString(R.string.error), Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-
-        })
-
-
     }
 }

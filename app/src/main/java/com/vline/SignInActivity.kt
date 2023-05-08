@@ -2,14 +2,18 @@ package com.vline
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import cn.pedant.SweetAlert.SweetAlertDialog
 import com.google.gson.JsonObject
@@ -21,6 +25,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+
 class SignInActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySignInBinding
@@ -29,13 +34,12 @@ class SignInActivity : AppCompatActivity() {
     private var status_sakha = false
     private lateinit var context: Activity
     var arr = arrayOf(
-        Manifest.permission.READ_EXTERNAL_STORAGE,
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-        Manifest.permission.CAMERA
+        Manifest.permission.ACCESS_BACKGROUND_LOCATION
     )
-    private val permissionCode = 101
+    private val LOCATION_PERMISSION_CODE = 101
+    private val BACKGROUND_LOCATION_PERMISSION_CODE = 102
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,28 +56,124 @@ class SignInActivity : AppCompatActivity() {
         clickListener()
 //        startActivity(Intent(context, VerificationActivity::class.java))
 
-        ActivityCompat.requestPermissions(
-            this@SignInActivity, arr, permissionCode
-        )
+//        ActivityCompat.requestPermissions(
+//            this@SignInActivity, arr, LOCATION_PERMISSION_CODE
+//        )
+
+        checkPermission()
+    }
+    private fun checkPermission() {
+        if (ContextCompat.checkSelfPermission(
+                this@SignInActivity,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            // Fine Location permission is granted
+            // Check if current android version >= 11, if >= 11 check for Background Location permission
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (ContextCompat.checkSelfPermission(
+                        this@SignInActivity,
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    // Background Location Permission is granted so do your work here
+                } else {
+                    // Ask for Background Location Permission
+                    askPermissionForBackgroundUsage()
+                }
+            }
+        } else {
+            // Fine Location Permission is not granted so ask for permission
+            askForLocationPermission()
+        }
+    }
+    private fun askForLocationPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(
+                this@SignInActivity,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        ) {
+            AlertDialog.Builder(this)
+                .setTitle("Permission Needed!")
+                .setMessage("Location Permission Needed!")
+                .setPositiveButton("OK",
+                    DialogInterface.OnClickListener { dialog, which ->
+                        ActivityCompat.requestPermissions(
+                            this@SignInActivity, arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                            ), LOCATION_PERMISSION_CODE
+                        )
+                    })
+                .setNegativeButton("CANCEL", DialogInterface.OnClickListener { dialog, which ->
+                    // Permission is denied by the user
+                })
+                .create().show()
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_CODE
+            )
+        }
     }
 
+    private fun askPermissionForBackgroundUsage() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(
+                this@SignInActivity,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
+        ) {
+            AlertDialog.Builder(this)
+                .setTitle("Permission Needed!")
+                .setMessage("Background Location Permission Needed!, tap \"Allow all time in the next screen\"")
+                .setPositiveButton(
+                    "OK"
+                ) { dialog, which ->
+                    ActivityCompat.requestPermissions(
+                        this@SignInActivity,
+                        arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                        BACKGROUND_LOCATION_PERMISSION_CODE
+                    )
+                }
+                .setNegativeButton(
+                    "CANCEL"
+                ) { dialog, which ->
+                    // User declined for Background Location Permission.
+                }
+                .create().show()
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                BACKGROUND_LOCATION_PERMISSION_CODE
+            )
+        }
+    }
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == permissionCode) {
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-//                dialogPermission("background location")
-                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
-            } else if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show()
-            } else {
+        if (requestCode == LOCATION_PERMISSION_CODE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // User granted location permission
+                // Now check if android version >= 11, if >= 11 check for Background Location Permission
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    if (ContextCompat.checkSelfPermission(this@SignInActivity, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        // Background Location Permission is granted so do your work here
 
-//                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+                    } else {
+                        // Ask for Background Location Permission
+                        askPermissionForBackgroundUsage();
+                    }
+                }
+            } else {
+                // User denied location permission
+            }
+        } else if (requestCode == BACKGROUND_LOCATION_PERMISSION_CODE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // User granted for Background Location Permission.
+            } else {
+                // User declined for Background Location Permission.
             }
         }
     }

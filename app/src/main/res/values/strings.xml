@@ -46,8 +46,8 @@
     <string name="travelName">प्रवास नाम</string>
     <string name="attendance">उपस्थिति</string>
     <string name="nkk">नगर कार्यकारिणी</string>
-    <string name="cancel">रद्द करना</string>
-    <string name="retry">पुन: प्रयास करें</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
     <string name="other">अन्य</string>
     <string name="other_lenght">अन्य: पाठ सामग्री 400 वर्णों तक सीमित है</string>
     <string name="update">अपडेट करें</string>

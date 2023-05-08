@@ -49,8 +49,8 @@ class RetrofitManager {
     fun showDialog(context: Activity) {
 
         val pDialog = SweetAlertDialog(context, SweetAlertDialog.WARNING_TYPE)
-        pDialog.titleText = "कोई इंटरनेट कनेक्शन नहीं"
-        pDialog.contentText = "सुनिश्चित करें कि WI-FI या मोबाइल डेटा चालू है, फिर पुनः प्रयास करें"
+        pDialog.titleText = "No Internet"
+        pDialog.contentText = "Check your internet connection and try again."
         pDialog.confirmText = context.getString(R.string.retry)
         pDialog.cancelText = context.getString(R.string.cancel)
         pDialog.progressHelper.barColor = Color.parseColor("#02639C")

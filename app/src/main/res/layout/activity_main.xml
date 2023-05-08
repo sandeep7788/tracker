@@ -122,15 +122,14 @@
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <LinearLayout
+                    android:id="@+id/linearLayout2"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="100dp"
                     android:orientation="vertical"
-                    app:layout_constraintBottom_toTopOf="@+id/linearLayout3"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="@+id/linearLayout"
@@ -206,6 +205,7 @@
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
 
+                        <!--
                         <ImageView
                             android:id="@+id/imageView4"
                             android:layout_width="35dp"
@@ -226,6 +226,7 @@
                             app:layout_constraintVertical_bias="0.49"
                             app:srcCompat="@drawable/ic_baseline_camera_alt_24"
                             app:tint="@color/white" />
+-->
 
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -239,10 +240,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
                     android:orientation="vertical"
-                    app:layout_constraintBottom_toTopOf="@+id/linearLayout2"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/linearLayout2"
                     app:layout_constraintVertical_bias="1.0">
 
                     <LinearLayout
@@ -332,6 +333,7 @@
                 </LinearLayout>
 
 
+<!--
                 <LinearLayout
                     android:id="@+id/linearLayout2"
                     android:layout_width="match_parent"
@@ -364,6 +366,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="100sp" />
                 </LinearLayout>
+-->
 
 <!--
                 <Button

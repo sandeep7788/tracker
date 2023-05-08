@@ -1,7 +1,10 @@
 package com.vline.activity
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -9,6 +12,8 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import cn.pedant.SweetAlert.SweetAlertDialog
 import com.alimuzaffar.lib.pin.PinEntryEditText
 import com.google.gson.JsonObject
@@ -20,7 +25,6 @@ import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.util.HashMap
 
 class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCompletionListener {
 
@@ -45,7 +49,8 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
         setListeners()
 
         number?.text =
-            "Enter the OTP sent to +91 " + MyApplication.ReadStringPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim()
+            "Enter the OTP sent to +91 " + MyApplication.ReadStringPreferences(ApiContants.PREF_WhatsAppNumber)
+                .toString().trim()
 
 
 //        if (pinEntry != null) {
@@ -69,12 +74,57 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
 //                }
 //            }
 //        }
+        checkPermission()
     }
 
+    var arr = arrayOf(
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+    )
+
+    private fun checkPermission() {
+        if (ContextCompat.checkSelfPermission(
+                this@VerificationActivity,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            // Fine Location permission is granted
+            // Check if current android version >= 11, if >= 11 check for Background Location permission
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (ContextCompat.checkSelfPermission(
+                        this@VerificationActivity,
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    // Background Location Permission is granted so do your work here
+                } else {
+                    // Ask for Background Location Permission
+                    ActivityCompat.requestPermissions(
+                        this@VerificationActivity, arr, 101
+                    )
+                }
+            }
+        } else {
+            ActivityCompat.requestPermissions(
+                this@VerificationActivity, arr, 101
+            )
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+    }
     private fun initializeUi() {
         pinEntry = findViewById<PinEntryEditText>(R.id.otp_view)
         validateButton = findViewById<Button>(R.id.validate_button)
         number = findViewById<TextView>(R.id.number)
+
     }
 
     private fun setListeners() {
@@ -84,7 +134,7 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
 
     override fun onClick(v: View?) {
         if (v?.id == R.id.validate_button) {
-            Toast.makeText(this, pinEntry?.text, Toast.LENGTH_SHORT).show()
+//            Toast.makeText(this, pinEntry?.text, Toast.LENGTH_SHORT).show()
             loginByOtp()
         }
     }
@@ -101,8 +151,12 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
                 ?.create(ApiInterface::class.java)
 
 
-        Log.e(TAG, "loginByOtp: "+ MyApplication.ReadStringPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim())
-        Log.e(TAG, "loginByOtp: "+ pinEntry?.text.toString())
+        Log.e(
+            TAG,
+            "loginByOtp: " + MyApplication.ReadStringPreferences(ApiContants.PREF_WhatsAppNumber)
+                .toString().trim()
+        )
+        Log.e(TAG, "loginByOtp: " + pinEntry?.text.toString())
 
 //        var json= HashMap<String,String>()
 //        json.put("mobile",MyApplication.ReadStringPreferences(ApiContants.PREF_WhatsAppNumber).toString().trim())
@@ -145,43 +199,44 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
                                 JSONObject(response.body().toString()).getJSONObject("user")
 
 
-
-                        val authorisationJsonObject =
-                            JSONObject(response.body().toString()).getJSONObject("authorisation")
-
-
-
-
-                        MyApplication.writeStringPreference(
-                            ApiContants.PREF_Token, authorisationJsonObject.getString("token")
-                        )
-                        MyApplication.writeStringPreference(
-                            ApiContants.PREF_type, authorisationJsonObject.getString("type")
-                        )
+                            val authorisationJsonObject =
+                                JSONObject(
+                                    response.body().toString()
+                                ).getJSONObject("authorisation")
 
 
-                        if (jsonObject.has("id")) {
 
-                            var data = jsonObject
-
-                            Utility.showSnackBar(
-                                this@VerificationActivity,
-                                "Welcome " + data.getString("name").toString()
-                            )
-
-                            MyApplication.writeIntPreference(
-                                ApiContants.PREF_USER_ID, data.getInt("id")
-                            )
-                            MyApplication.writeStringPreference(
-                                ApiContants.PREF_USER_NAME, data.getString("name")
-                            )
-                            MyApplication.writeStringPreference(
-                                ApiContants.PREF_WhatsAppNumber, data.getString("mobile")
-                            )
 
                             MyApplication.writeStringPreference(
-                                ApiContants.login, "true"
+                                ApiContants.PREF_Token, authorisationJsonObject.getString("token")
                             )
+                            MyApplication.writeStringPreference(
+                                ApiContants.PREF_type, authorisationJsonObject.getString("type")
+                            )
+
+
+                            if (jsonObject.has("id")) {
+
+                                var data = jsonObject
+
+                                Utility.showSnackBar(
+                                    this@VerificationActivity,
+                                    "Welcome " + data.getString("name").toString()
+                                )
+
+                                MyApplication.writeIntPreference(
+                                    ApiContants.PREF_USER_ID, data.getInt("id")
+                                )
+                                MyApplication.writeStringPreference(
+                                    ApiContants.PREF_USER_NAME, data.getString("name")
+                                )
+                                MyApplication.writeStringPreference(
+                                    ApiContants.PREF_WhatsAppNumber, data.getString("mobile")
+                                )
+
+                                MyApplication.writeStringPreference(
+                                    ApiContants.login, "true"
+                                )
 
 //                            MyApplication.writeStringPreference(
 //                                ApiContants.PREF_role, data.getString("role_name")
@@ -195,13 +250,13 @@ class VerificationActivity : AppCompatActivity(), View.OnClickListener, OnOtpCom
 //                            )
 
 
-                            startActivity(Intent(context, MainActivity::class.java))
-                            finish()
-                        } else {
-                            Utility.showDialog(
-                                context, SweetAlertDialog.WARNING_TYPE, msg
-                            )
-                        }
+                                startActivity(Intent(context, MainActivity::class.java))
+                                finish()
+                            } else {
+                                Utility.showDialog(
+                                    context, SweetAlertDialog.WARNING_TYPE, msg
+                                )
+                            }
 
                         } else {
                             Utility.showDialog(
